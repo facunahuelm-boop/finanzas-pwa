@@ -86,13 +86,14 @@ export default function DashboardPage() {
   const balanceMes = ingresosMes - gastosTotalesMes;
 
   const datosMensuales = useMemo(() => {
-    const mapa = new Map<string, { mes: string; Ingresos: number; Gastos: number }>();
+    const mapa = new Map<string, { mes: string; Ingresos: number; Gastos: number; GastosFijos: number; Total: number }>();
     const hoy = new Date();
     for (let i = 5; i >= 0; i--) {
       const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
       const clave = `${d.getFullYear()}-${d.getMonth()}`;
-      mapa.set(clave, { mes: MESES[d.getMonth()].slice(0, 3), Ingresos: 0, Gastos: 0 });
+      mapa.set(clave, { mes: MESES[d.getMonth()].slice(0, 3), Ingresos: 0, Gastos: 0, GastosFijos: 0, Total: 0 });
     }
+    // Sumar transacciones manuales
     transacciones.forEach((t) => {
       const d = new Date(t.fecha + 'T00:00:00');
       const clave = `${d.getFullYear()}-${d.getMonth()}`;
@@ -102,8 +103,16 @@ export default function DashboardPage() {
         else entrada.Gastos += Number(t.monto);
       }
     });
+    // Sumar gastos fijos mensuales a cada mes del gráfico
+    const totalFijosMensuales = gastosFijos
+      .filter((g) => g.frecuencia === 'mensual')
+      .reduce((a, g) => a + Number(g.monto), 0);
+    mapa.forEach((entrada) => {
+      entrada.GastosFijos = totalFijosMensuales;
+      entrada.Total = entrada.Gastos + totalFijosMensuales;
+    });
     return Array.from(mapa.values());
-  }, [transacciones]);
+  }, [transacciones, gastosFijos]);
 
   const recientes = transacciones.slice(0, 5);
   const totalDeudas = deudas.reduce((a, d) => a + (Number(d.monto_total) - Number(d.monto_pagado)), 0);
@@ -186,18 +195,36 @@ export default function DashboardPage() {
       <div className="grid gap-4 lg:grid-cols-5">
         {/* Gráfico */}
         <div className="card p-5 lg:col-span-3">
-          <h3 className="mb-4 text-sm font-semibold">Ingresos vs. gastos — últimos 6 meses</h3>
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Ingresos vs. gastos totales — últimos 6 meses</h3>
+          </div>
+          {/* Leyenda */}
+          <div className="mb-3 flex flex-wrap gap-4 text-xs text-muted-light dark:text-muted-dark">
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{background:'#0F6B5C'}}/>
+              Ingresos
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{background:'#B54A3F'}}/>
+              Gastos manuales
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{background:'#E8906A'}}/>
+              Gastos fijos
+            </span>
+          </div>
           <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={datosMensuales}>
+            <BarChart data={datosMensuales} barCategoryGap="30%">
               <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-border-light dark:stroke-border-dark" />
               <XAxis dataKey="mes" tickLine={false} axisLine={false} fontSize={12} />
               <YAxis tickLine={false} axisLine={false} fontSize={12} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} width={36} />
               <Tooltip
-                formatter={(value: number) => formatCurrency(value)}
+                formatter={(value: number, name: string) => [formatCurrency(value), name]}
                 contentStyle={{ borderRadius: 12, border: '1px solid #E1E5E2', fontSize: 13 }}
               />
               <Bar dataKey="Ingresos" fill="#0F6B5C" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="Gastos" fill="#B54A3F" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="Gastos" stackId="gastos" fill="#B54A3F" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="GastosFijos" stackId="gastos" fill="#E8906A" radius={[6, 6, 0, 0]} name="Gastos fijos" />
             </BarChart>
           </ResponsiveContainer>
         </div>
