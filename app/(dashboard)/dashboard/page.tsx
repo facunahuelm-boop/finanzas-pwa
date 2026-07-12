@@ -28,15 +28,14 @@ export default function DashboardPage() {
       const { data: { user } } = await supabase.auth.getUser();
       setNombreUsuario(user?.email?.split('@')[0] ?? '');
 
-      const seisMesesAtras = new Date();
-      seisMesesAtras.setMonth(seisMesesAtras.getMonth() - 5);
-      seisMesesAtras.setDate(1);
+      const inicioMesActual = new Date();
+      inicioMesActual.setDate(1);
 
       const [{ data: tx }, { data: deu }, { data: gf }] = await Promise.all([
         supabase
           .from('transacciones')
           .select('*, categorias(*)')
-          .gte('fecha', seisMesesAtras.toISOString().slice(0, 10))
+          .gte('fecha', inicioMesActual.toISOString().slice(0, 10))
           .order('fecha', { ascending: false }),
         supabase
           .from('deudas')
@@ -86,14 +85,24 @@ export default function DashboardPage() {
   const balanceMes = ingresosMes - gastosTotalesMes;
 
   const datosMensuales = useMemo(() => {
-    const mapa = new Map<string, { mes: string; Ingresos: number; Gastos: number; GastosFijos: number; Total: number }>();
+    const mapa = new Map<string, { mes: string; anio: number; mesNum: number; Ingresos: number; Gastos: number; GastosFijos: number; Total: number }>();
     const hoy = new Date();
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+    const mesInicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1); // julio 2026
+    // Mostrar desde el mes actual hasta 5 meses hacia adelante (6 meses total)
+    for (let i = 0; i <= 5; i++) {
+      const d = new Date(mesInicio.getFullYear(), mesInicio.getMonth() + i, 1);
       const clave = `${d.getFullYear()}-${d.getMonth()}`;
-      mapa.set(clave, { mes: MESES[d.getMonth()].slice(0, 3), Ingresos: 0, Gastos: 0, GastosFijos: 0, Total: 0 });
+      mapa.set(clave, {
+        mes: MESES[d.getMonth()].slice(0, 3),
+        anio: d.getFullYear(),
+        mesNum: d.getMonth(),
+        Ingresos: 0,
+        Gastos: 0,
+        GastosFijos: 0,
+        Total: 0,
+      });
     }
-    // Sumar transacciones manuales
+    // Sumar transacciones manuales (solo las que caen en el rango)
     transacciones.forEach((t) => {
       const d = new Date(t.fecha + 'T00:00:00');
       const clave = `${d.getFullYear()}-${d.getMonth()}`;
@@ -196,7 +205,7 @@ export default function DashboardPage() {
         {/* Gráfico */}
         <div className="card p-5 lg:col-span-3">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-sm font-semibold">Ingresos vs. gastos totales — últimos 6 meses</h3>
+            <h3 className="text-sm font-semibold">Ingresos vs. gastos — jul a dic {new Date().getFullYear()}</h3>
           </div>
           {/* Leyenda */}
           <div className="mb-3 flex flex-wrap gap-4 text-xs text-muted-light dark:text-muted-dark">
