@@ -69,13 +69,18 @@ export default function DashboardPage() {
   const ingresosMes = delMes.filter((t) => t.tipo === 'ingreso').reduce((a, t) => a + Number(t.monto), 0);
   const gastosMes = delMes.filter((t) => t.tipo === 'gasto').reduce((a, t) => a + Number(t.monto), 0);
 
-  // Gastos fijos pendientes (no pagados este mes, solo mensuales)
+  // Todos los gastos fijos mensuales (pagados y pendientes) suman en Gastos
+  const gastosFijosTotal = gastosFijos
+    .filter((g) => g.frecuencia === 'mensual')
+    .reduce((a, g) => a + Number(g.monto), 0);
+
+  // Gastos fijos pendientes (para mostrar en el subtítulo)
   const gastosFijosPendientesMonto = gastosFijos
     .filter((g) => g.frecuencia === 'mensual' && !g.activo)
     .reduce((a, g) => a + Number(g.monto), 0);
 
-  // Gastos totales = gastos manuales + gastos fijos pendientes
-  const gastosTotalesMes = gastosMes + gastosFijosPendientesMonto;
+  // Gastos totales = gastos manuales + TODOS los gastos fijos mensuales
+  const gastosTotalesMes = gastosMes + gastosFijosTotal;
 
   // Balance = ingresos - gastos totales
   const balanceMes = ingresosMes - gastosTotalesMes;
@@ -146,12 +151,12 @@ export default function DashboardPage() {
             <TrendingDown size={15} className="text-danger" />
           </div>
           <p className="figure text-xl font-semibold text-danger">{formatCurrency(gastosTotalesMes)}</p>
-          {gastosFijosPendientesMonto > 0 && (
+          {gastosFijosTotal > 0 && (
             <p className="text-xs text-muted-light dark:text-muted-dark mt-1">
-              incl. {formatCurrency(gastosFijosPendientesMonto)} fijos
+              incl. {formatCurrency(gastosFijosTotal)} fijos
             </p>
           )}
-          {gastosFijosPendientesMonto === 0 && (
+          {gastosFijosTotal === 0 && (
             <p className="text-xs text-muted-light dark:text-muted-dark mt-1">este mes</p>
           )}
         </div>
