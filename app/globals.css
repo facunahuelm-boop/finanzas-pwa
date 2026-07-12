@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-bg-light dark:bg-bg-dark text-ink-light dark:text-ink-dark antialiased;
+    font-feature-settings: 'tnum' 1;
+  }
+  ::selection {
+    @apply bg-primary/20;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-2xl;
+  }
+  .input {
+    @apply w-full rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-3.5 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white transition hover:bg-primary-dark active:scale-[0.98] disabled:opacity-50;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-border-light dark:border-border-dark bg-transparent px-4 py-2.5 text-sm font-medium text-ink-light dark:text-ink-dark transition hover:bg-black/[0.03] dark:hover:bg-white/[0.04] active:scale-[0.98];
+  }
+  .figure {
+    font-variant-numeric: tabular-nums;
+    @apply font-mono;
+  }
+}
+
+/* Scrollbar sutil */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { @apply bg-border-light dark:bg-border-dark rounded-full; }
+::-webkit-scrollbar-track { background: transparent; }
