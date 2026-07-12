@@ -74,8 +74,11 @@ export default function DashboardPage() {
     .filter((g) => g.frecuencia === 'mensual' && !g.activo)
     .reduce((a, g) => a + Number(g.monto), 0);
 
-  // Balance real = ingresos - gastos manuales - gastos fijos pendientes
-  const balanceMes = ingresosMes - gastosMes - gastosFijosPendientesMonto;
+  // Gastos totales = gastos manuales + gastos fijos pendientes
+  const gastosTotalesMes = gastosMes + gastosFijosPendientesMonto;
+
+  // Balance = ingresos - gastos totales
+  const balanceMes = ingresosMes - gastosTotalesMes;
 
   const datosMensuales = useMemo(() => {
     const mapa = new Map<string, { mes: string; Ingresos: number; Gastos: number }>();
@@ -142,10 +145,10 @@ export default function DashboardPage() {
             <span className="text-xs text-muted-light dark:text-muted-dark">Gastos</span>
             <TrendingDown size={15} className="text-danger" />
           </div>
-          <p className="figure text-xl font-semibold text-danger">{formatCurrency(gastosMes)}</p>
+          <p className="figure text-xl font-semibold text-danger">{formatCurrency(gastosTotalesMes)}</p>
           {gastosFijosPendientesMonto > 0 && (
             <p className="text-xs text-muted-light dark:text-muted-dark mt-1">
-              + {formatCurrency(gastosFijosPendientesMonto)} fijos pendientes
+              incl. {formatCurrency(gastosFijosPendientesMonto)} fijos
             </p>
           )}
           {gastosFijosPendientesMonto === 0 && (
@@ -155,15 +158,13 @@ export default function DashboardPage() {
 
         <div className="card p-4">
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-xs text-muted-light dark:text-muted-dark">Balance real</span>
+            <span className="text-xs text-muted-light dark:text-muted-dark">Balance</span>
             <Wallet size={15} className={balanceMes >= 0 ? 'text-primary' : 'text-danger'} />
           </div>
           <p className={`figure text-xl font-semibold ${balanceMes >= 0 ? 'text-primary' : 'text-danger'}`}>
             {balanceMes >= 0 ? '+' : ''}{formatCurrency(balanceMes)}
           </p>
-          <p className="text-xs text-muted-light dark:text-muted-dark mt-1">
-            incl. fijos pendientes
-          </p>
+          <p className="text-xs text-muted-light dark:text-muted-dark mt-1">este mes</p>
         </div>
 
         <div className="card p-4">
